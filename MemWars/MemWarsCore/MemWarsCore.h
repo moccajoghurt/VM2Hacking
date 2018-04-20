@@ -43,7 +43,6 @@ BOOL ReadProcessMemoryAtPtrLocation(void*, SIZE_T, HANDLE, BYTEARRAY*);
 BOOL WriteProcessMemoryAtPtrLocation(HANDLE, void* baseAddr, void* valPtr, SIZE_T valSize);
 HANDLE GetProcessByWindowName(const TCHAR*);
 HANDLE GetProcessByName(const TCHAR*);
-HANDLE GetProcessByNameEx(const TCHAR* szProcessName, BOOL bInheritHandle, DWORD dwProcessId);
 void* GetProcessBaseAddress(HANDLE);
 BOOL SetProcessPrivilege(LPCSTR, BOOL);
 BOOL ReallocMemoryMap(MEMMAP*);

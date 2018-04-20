@@ -205,7 +205,7 @@ BOOL WriteProcessMemoryAtPtrLocation(HANDLE process, void* baseAdress, void* val
     SIZE_T bytesWritten = 0;
     BOOL status =  WriteProcessMemory(process, baseAdress, value, valSize, &bytesWritten);
     if (status == 0) {
-        printf("writeMemoryAtPtrLocation()::WriteProcessMemory() failed!\n");
+        printf("writeMemoryAtPtrLocation()::WriteProcessMemory() failed! %d\n", GetLastError());
         return FALSE;
     }
     return TRUE;
@@ -227,13 +227,7 @@ HANDLE GetProcessByWindowName(const TCHAR* windowName) {
 }
 
 HANDLE GetProcessByName(const TCHAR* szProcessName) {
-    return GetProcessByNameEx(szProcessName, FALSE, PROCESS_ALL_ACCESS);
-}
-
-HANDLE GetProcessByNameEx(const TCHAR* szProcessName, BOOL bInheritHandle, DWORD dwProcessId) {
-    if (szProcessName == NULL) {
-        return NULL;
-    }
+    if(szProcessName == NULL) return NULL;
     const TCHAR* strProcessName = szProcessName;
 
     DWORD aProcesses[1024], cbNeeded, cProcesses;
@@ -243,7 +237,7 @@ HANDLE GetProcessByNameEx(const TCHAR* szProcessName, BOOL bInheritHandle, DWORD
     cProcesses = cbNeeded / sizeof(DWORD);
     for (UINT i = 0; i < cProcesses; i++) {
         DWORD dwProcessID = aProcesses[i];
-        HANDLE hProcess = OpenProcess(dwProcessId, bInheritHandle, dwProcessID);
+        HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | PROCESS_ALL_ACCESS, FALSE, dwProcessID);
 
         TCHAR szEachProcessName[MAX_PATH];
         if (hProcess != NULL) {
