@@ -106,7 +106,7 @@ BOOL FindValueInProcess(BYTEARRAY* bArrValue, HANDLE hProcess, MEMPTRS* matching
             BOOL status = ReadProcessMemory(hProcess, p, buf, info.RegionSize, &bytesRead);
             if (!status) {
                 if (GetLastError() != 299) {
-                    printf("FindValueInProcess()::ReadProcessMemory() failed: %d\n", GetLastError());
+                    // printf("FindValueInProcess()::ReadProcessMemory() failed: %d\n", GetLastError());
                     return FALSE;
                 }
             }
@@ -173,13 +173,13 @@ void FreeMemMap(MEMMAP* memMap) {
 
 BOOL ReadProcessMemoryAtPtrLocation(void* ptr, SIZE_T byteLen, HANDLE process, BYTEARRAY* readValueByteArray) {
     if (byteLen > MAX_VAL_SIZE) {
-        printf("ReadProcessMemoryAtPtrLocation() failed, byteLen too big, increase MAX_VAL_SIZE\n");
+        // printf("ReadProcessMemoryAtPtrLocation() failed, byteLen too big, increase MAX_VAL_SIZE\n");
         return FALSE;
     }
     MEMORY_BASIC_INFORMATION info;
     BOOL status = VirtualQueryEx(process, ptr, &info, sizeof(info));
     if (status == 0 || info.RegionSize < byteLen || info.State != MEM_COMMIT) {
-        printf("ReadProcessMemoryAtPtrLocation()::VirtualQueryEx() failed\n");
+        // printf("ReadProcessMemoryAtPtrLocation()::VirtualQueryEx() failed\n");
         return FALSE;
     }
     BYTE* buf = malloc(info.RegionSize);
@@ -187,7 +187,7 @@ BOOL ReadProcessMemoryAtPtrLocation(void* ptr, SIZE_T byteLen, HANDLE process, B
     status = ReadProcessMemory(process, ptr, buf, byteLen, &bytesRead);
     if (!status) {
         if (GetLastError() != 299) {
-            printf("ReadProcessMemoryAtPtrLocation()::ReadProcessMemory() failed: %d\n", GetLastError());
+            // printf("ReadProcessMemoryAtPtrLocation()::ReadProcessMemory() failed: %d\n", GetLastError());
             return FALSE;
         }
     }
@@ -205,7 +205,7 @@ BOOL WriteProcessMemoryAtPtrLocation(HANDLE process, void* baseAdress, void* val
     SIZE_T bytesWritten = 0;
     BOOL status =  WriteProcessMemory(process, baseAdress, value, valSize, &bytesWritten);
     if (status == 0) {
-        printf("writeMemoryAtPtrLocation()::WriteProcessMemory() failed! %d\n", GetLastError());
+        // printf("writeMemoryAtPtrLocation()::WriteProcessMemory() failed! %d\n", GetLastError());
         return FALSE;
     }
     return TRUE;
@@ -214,14 +214,14 @@ BOOL WriteProcessMemoryAtPtrLocation(HANDLE process, void* baseAdress, void* val
 HANDLE GetProcessByWindowName(const TCHAR* windowName) {
     HWND windowHwnd = FindWindow(0, windowName);
     if (windowHwnd == NULL) {
-        printf("GetProcessByWindowName::FindWindow() returned NULL: %d\n", GetLastError());
+        // printf("GetProcessByWindowName::FindWindow() returned NULL: %d\n", GetLastError());
         return NULL;
     }
     DWORD processId;
     DWORD thread = GetWindowThreadProcessId(windowHwnd, &processId);
     HANDLE process = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION | PROCESS_ALL_ACCESS, FALSE, processId);
     if (process == NULL) {
-        printf("GetProcessByWindowName::OpenProcess() returned NULL: %d\n", GetLastError());
+        // printf("GetProcessByWindowName::OpenProcess() returned NULL: %d\n", GetLastError());
     }
     return process;
 }
@@ -288,7 +288,7 @@ BOOL MemorySnapshotToDisc(HANDLE hProcess, const TCHAR* fileName) {
             BOOL status = ReadProcessMemory(hProcess, p, buf, info.RegionSize, &bytesRead);
             if (!status) {
                 if (GetLastError() != 299) {
-                    printf("FindValueInProcess()::ReadProcessMemory() failed: %d\n", GetLastError());
+                    // printf("FindValueInProcess()::ReadProcessMemory() failed: %d\n", GetLastError());
                     return FAST_FAIL_LEGACY_GS_VIOLATION;
                 }
             }

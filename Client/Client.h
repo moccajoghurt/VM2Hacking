@@ -7,5 +7,6 @@ class Client {
 public:
     void Init();
     wstring lsassExe;
-    wstring vermintideExe;
+    wstring wVermintideExe;
+    string vermintideExe;
 };
