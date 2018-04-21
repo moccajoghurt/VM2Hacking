@@ -1,5 +1,6 @@
 #pragma once;
 #include <string>
+#include <map>
 #include "../MemWars/MemWarsCore/MemWarsCore.h"
 #include "../MemWars/MemWarsServices/StealthyMemManipulatorClient.h"
 #include "../MemWars/MemWarsServices/StealthyMemManipulatorGetHandleId.h"
@@ -11,6 +12,8 @@ public:
     void Init();
     BOOL FindValue(void* value, SIZE_T size, MEMPTRS* matchinValues, uintptr_t startAddress, uintptr_t endAddress);
     BOOL FindIntegerRoutine();
+    map<uintptr_t, int> GetMemoryMap(uintptr_t startAddress, uintptr_t endAddress);
+    BOOL MemoryMapRoutine(uintptr_t startAddress, uintptr_t endAddress);
     StealthyMemClient& GetMemManipClient() {
         return smc;
     }
