@@ -11,7 +11,7 @@ void Client::Init() {
     string e = "";
     lsassExe = we+L'l'+L's'+L'a'+L's'+L's'+L'.'+L'e'+L'x'+L'e';
     // wVermintideExe = we+L'v'+L'e'+L'r'+L'm'+L'i'+L'n'+L't'+L'i'+L'd'+L'e'+L'2'+L'.'+L'e'+L'x'+L'e';
-    wVermintideExe = L"SuperMeatBoy.exe";
+    wVermintideExe = L"RustClient.exe";
     vermintideExe = e+'v'+'e'+'r'+'m'+'i'+'n'+'t'+'i'+'d'+'e'+'2'+'.'+'e'+'x'+'e';
 }
 
