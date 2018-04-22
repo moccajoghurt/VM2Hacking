@@ -12,7 +12,7 @@ public:
     void Init();
     BOOL FindValue(void* value, SIZE_T size, MEMPTRS* matchinValues, uintptr_t startAddress, uintptr_t endAddress);
     BOOL FindIntegerRoutine();
-    map<uintptr_t, int> GetMemoryMap(uintptr_t startAddress, uintptr_t endAddress);
+    map<uintptr_t, BYTE> GetMemoryMap(uintptr_t startAddress, uintptr_t endAddress);
     BOOL MemoryMapRoutine(uintptr_t startAddress, uintptr_t endAddress);
     StealthyMemClient& GetMemManipClient() {
         return smc;
@@ -30,10 +30,8 @@ protected:
     wstring lsassExe;
     wstring wVermintideExe;
     string vermintideExe;
-    static const uintptr_t textBase = 0x10000;
-    static const uintptr_t imageBase = 0x140000000;
-    static const uintptr_t baseAddress = textBase + imageBase;
-    static const uintptr_t endOfGameAddress = 0x14102D029;
+    static const uintptr_t baseAddress = 0x140000000;
+    static const uintptr_t endOfGameAddress = 0x147A12000;
     StealthyMemClient smc;
 };
 

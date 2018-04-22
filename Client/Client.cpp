@@ -10,8 +10,8 @@ void Client::Init() {
     wstring we = L"";
     string e = "";
     lsassExe = we+L'l'+L's'+L'a'+L's'+L's'+L'.'+L'e'+L'x'+L'e';
-    // wVermintideExe = we+L'v'+L'e'+L'r'+L'm'+L'i'+L'n'+L't'+L'i'+L'd'+L'e'+L'2'+L'.'+L'e'+L'x'+L'e';
-    wVermintideExe = L"RustClient.exe";
+    wVermintideExe = we+L'v'+L'e'+L'r'+L'm'+L'i'+L'n'+L't'+L'i'+L'd'+L'e'+L'2'+L'.'+L'e'+L'x'+L'e';
+    // wVermintideExe = L"RustClient.exe";
     vermintideExe = e+'v'+'e'+'r'+'m'+'i'+'n'+'t'+'i'+'d'+'e'+'2'+'.'+'e'+'x'+'e';
 }
 
@@ -39,6 +39,7 @@ BOOL Client::FindIntegerRoutine() {
         return FALSE;
     }
     while (TRUE) {
+        cout << "size: " << ptrs.size << endl;
         cout << "show: -1, any other int: filter" << endl;
         cin >> val;
         if (val != -1) {
@@ -61,12 +62,12 @@ BOOL Client::FindIntegerRoutine() {
     return TRUE;
 }
 
-map<uintptr_t, int> Client::GetMemoryMap(uintptr_t startAddress = baseAddress, uintptr_t endAddress = endOfGameAddress) {
-    map<uintptr_t, int> memoryMap;
+map<uintptr_t, BYTE> Client::GetMemoryMap(uintptr_t startAddress = baseAddress, uintptr_t endAddress = endOfGameAddress) {
+    map<uintptr_t, BYTE> memoryMap;
     for (uintptr_t i = startAddress; i < endAddress; i++) {
         SIZE_T sizeBuf;
         int buf;
-        smc.ReadVirtualMemory((void*)(i), &buf, sizeof(int), &sizeBuf);
+        smc.ReadVirtualMemory((void*)(i), &buf, sizeof(BYTE), &sizeBuf);
         memoryMap[i] = buf;
     }
     return memoryMap;
@@ -74,7 +75,7 @@ map<uintptr_t, int> Client::GetMemoryMap(uintptr_t startAddress = baseAddress, u
 
 BOOL Client::MemoryMapRoutine(uintptr_t startAddress = baseAddress, uintptr_t endAddress = endOfGameAddress) {
     cout << "Creating Map..." << endl;
-    map<uintptr_t, int> memoryMap = GetMemoryMap(startAddress, endAddress);
+    map<uintptr_t, BYTE> memoryMap = GetMemoryMap(startAddress, endAddress);
 
     while (TRUE) {
         int choice;
@@ -85,10 +86,10 @@ BOOL Client::MemoryMapRoutine(uintptr_t startAddress = baseAddress, uintptr_t en
             cout << "invalid choice" << endl;
             return FALSE;
         }
-        for(map<uintptr_t, int>::iterator i = memoryMap.begin(); i != memoryMap.end();) {
+        for(map<uintptr_t, BYTE>::iterator i = memoryMap.begin(); i != memoryMap.end();) {
             SIZE_T sizeBuf;
             int buf;
-            smc.ReadVirtualMemory((void*)(i->first), &buf, sizeof(int), &sizeBuf);
+            smc.ReadVirtualMemory((void*)(i->first), &buf, sizeof(BYTE), &sizeBuf);
 
             if (choice == 1 && i->second == buf) {
                 memoryMap.erase(i++);
@@ -107,15 +108,13 @@ BOOL Client::MemoryMapRoutine(uintptr_t startAddress = baseAddress, uintptr_t en
             cout << "size: " << memoryMap.size() << endl << "1: show" << endl << "other val: no" << endl;
             cin >> choice;
             if (choice == 1) {
-                for(map<uintptr_t, int>::iterator i = memoryMap.begin(); i != memoryMap.end();) {
+                for(map<uintptr_t, BYTE>::iterator i = memoryMap.begin(); i != memoryMap.end();) {
                     cout << hex << i->first << "\t" << dec << i->second << endl;
                     i++;
                 }
             }
         }
     }
-
-
 
     return TRUE;
 }
@@ -134,5 +133,6 @@ int main() {
         return 1;
     }
 
-    c.MemoryMapRoutine();
+    // c.MemoryMapRoutine();
+    c.FindIntegerRoutine();
 }
