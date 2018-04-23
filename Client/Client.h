@@ -1,6 +1,7 @@
 #pragma once;
 #include <string>
 #include <map>
+#include <vector>
 #include "../MemWars/MemWarsCore/MemWarsCore.h"
 #include "../MemWars/MemWarsServices/StealthyMemManipulatorClient.h"
 #include "../MemWars/MemWarsServices/StealthyMemManipulatorGetHandleId.h"
@@ -10,8 +11,8 @@
 class Client {
 public:
     void Init();
-    vector<uintptr_t> FindValue(void* value, SIZE_T size, HANDLE hProcess, uintptr_t startAddress, uintptr_t endAddress);
-    BOOL FindValueRoutine();
+    vector<uintptr_t> FindValue(void* value, SIZE_T size, HANDLE hProcess);
+    BOOL FindValueRoutine(HANDLE hProcess);
     map<uintptr_t, BYTE> GetMemoryMap(uintptr_t startAddress, uintptr_t endAddress);
     BOOL MemoryMapRoutine(uintptr_t startAddress, uintptr_t endAddress);
     StealthyMemClient& GetMemManipClient() {
@@ -36,6 +37,7 @@ protected:
 };
 
 HANDLE GetProcessHandleByName(wstring name, DWORD, BOOL);
+vector<BYTE> HexStringToBytes(string hexString);
 
 /*
 Strings of interest:

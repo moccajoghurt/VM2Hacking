@@ -15,7 +15,7 @@ void Client::Init() {
     vermintideExe = e+'v'+'e'+'r'+'m'+'i'+'n'+'t'+'i'+'d'+'e'+'2'+'.'+'e'+'x'+'e';
 }
 
-vector<uintptr_t> Client::FindValue(void* value, const SIZE_T size, HANDLE hProcess, uintptr_t startAddress = baseAddress, uintptr_t endAddress = endOfGameAddress) {
+vector<uintptr_t> Client::FindValue(void* value, const SIZE_T size, HANDLE hProcess) {
     vector<uintptr_t> ptrs;
     if (size > MAX_VAL_SIZE) {
         cout << "Val too big" << endl;
@@ -42,8 +42,43 @@ vector<uintptr_t> Client::FindValue(void* value, const SIZE_T size, HANDLE hProc
     return ptrs;
 }
 
-BOOL Client::FindValueRoutine() {
+BOOL Client::FindValueRoutine(HANDLE hProcess) {
+    cout << "Enter hex value to search:" << endl;
+    string hexString;
+    cin >> hexString;
     
+    vector<BYTE> bytes = HexStringToBytes(hexString);
+    
+    vector<uintptr_t> matches = FindValue(&bytes[0], bytes.size(), hProcess);
+
+    while (TRUE) {
+
+        vector<uintptr_t> newVals;
+        string hexChoice;
+        cout << "size: " << matches.size() << endl;
+        cout << "show?" << endl << "FF: yes" << endl << "other value: search for this value" << endl;
+        cin >> hexChoice;
+
+        if (hexChoice == "FF") {
+            for (uintptr_t p : matches) {
+                cout << hex << p << endl;
+            }
+        } else {
+            bytes = HexStringToBytes(hexChoice);
+            for (uintptr_t p : matches) {
+                SIZE_T sizeBuf;
+                BYTE buf[MAX_VAL_SIZE];
+                smc.ReadVirtualMemory((void*)p, &buf, bytes.size(), &sizeBuf);
+                if (memcmp(buf, &bytes[0], bytes.size()) == 0) {
+                    newVals.push_back(p);
+                }
+            }
+            matches = newVals;
+        }
+    }
+    
+
+    return TRUE;
 }
 
 map<uintptr_t, BYTE> Client::GetMemoryMap(uintptr_t startAddress = baseAddress, uintptr_t endAddress = endOfGameAddress) {
@@ -109,6 +144,16 @@ HANDLE GetProcessHandleByName(wstring name, DWORD access = PROCESS_ALL_ACCESS, B
     return hProc;
 }
 
+vector<BYTE> HexStringToBytes(string hexString) {
+    vector<BYTE> bytes;
+    for (unsigned int i = 0; i < hexString.length(); i += 2) {
+        string byteString = hexString.substr(i, 2);
+        char byte = (char) strtol(byteString.c_str(), NULL, 16);
+        bytes.push_back(byte);
+    }
+    return bytes;
+}
+
 int main() {
 
     Client c;
@@ -123,19 +168,13 @@ int main() {
         return 1;
     }
 
-    // c.MemoryMapRoutine();
-    // c.FindValueRoutine();
-
     HANDLE gameHandle = GetProcessHandleByName(c.GetWVermintideExe());
     if (!gameHandle) {
         cout << "invalid handle" << endl;
         return 1;
     }
 
-    MEMORY_BASIC_INFORMATION buf;
-    SIZE_T result = VirtualQueryEx(gameHandle, (void*)0x140000000, &buf, sizeof(buf));
-    if (!result) {
-        cout << "VirtualQuery failed " << GetLastError() <<endl;
-    }
-    cout << result << endl;
+    c.FindValueRoutine(gameHandle);
+
+    // c.MemoryMapRoutine();
 }
