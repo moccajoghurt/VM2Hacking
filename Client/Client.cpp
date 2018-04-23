@@ -15,51 +15,35 @@ void Client::Init() {
     vermintideExe = e+'v'+'e'+'r'+'m'+'i'+'n'+'t'+'i'+'d'+'e'+'2'+'.'+'e'+'x'+'e';
 }
 
-BOOL Client::FindValue(void* value, const SIZE_T size, MEMPTRS* matchingValues, uintptr_t startAddress = baseAddress, uintptr_t endAddress = endOfGameAddress) {
+vector<uintptr_t> Client::FindValue(void* value, const SIZE_T size, HANDLE hProcess, uintptr_t startAddress = baseAddress, uintptr_t endAddress = endOfGameAddress) {
+    vector<uintptr_t> ptrs;
     if (size > MAX_VAL_SIZE) {
-        return FALSE;
+        cout << "Val too big" << endl;
+        return ptrs;
     }
-    for (uintptr_t i = startAddress; i < endAddress; i++) {
-        SIZE_T sizeBuf;
-        UCHAR buf[MAX_VAL_SIZE];
-        smc.ReadVirtualMemory((void*)(i), &buf, size, &sizeBuf);
-        if (memcmp(value, buf, size) == 0) {
-            ConcatMemPtr((void*)i, matchingValues);
-        }
-    }
-    return TRUE;
-}
-
-BOOL Client::FindIntegerRoutine() {
-    MEMPTRS ptrs = {0};
-    int val;
-    cout << "Enter Integer: ";
-    cin >> val;
-    if (!FindValue(&val, sizeof(int), &ptrs)) {
-        return FALSE;
-    }
-    while (TRUE) {
-        cout << "size: " << ptrs.size << endl;
-        cout << "show: -1, any other int: filter" << endl;
-        cin >> val;
-        if (val != -1) {
-            MEMPTRS newPtrs = {0};
-            for (UINT i = 0; i < ptrs.size; i++) {
-                int buf;
-                SIZE_T sizeBuf;
-                smc.ReadVirtualMemory((void*)ptrs.memPointerArray[i], &buf, sizeof(int), &sizeBuf);
-                if (buf == val) {
-                    ConcatMemPtr((void*)ptrs.memPointerArray[i], &newPtrs);
+    MEMORY_BASIC_INFORMATION info;
+    for (PBYTE p = NULL; VirtualQueryEx(hProcess, p, &info, sizeof(info)) != 0; p += info.RegionSize) {
+        if (info.State == MEM_COMMIT) {
+            BYTE* buf = (BYTE*)malloc(info.RegionSize);
+            SIZE_T sizeBuf;
+            smc.ReadVirtualMemory(p, &buf, info.RegionSize, &sizeBuf);
+            for (int i = 0; i < info.RegionSize; i++) {
+                if (i + size > info.RegionSize) {
+                    // end of memory region reached
+                    break;
+                }
+                if (memcmp(buf + i, value, size) == 0) {
+                    ptrs.push_back((uintptr_t)(p + i));
                 }
             }
-            ptrs = newPtrs;
-        } else {
-            for (UINT i = 0; i < ptrs.size; i++) {
-                cout << hex << ptrs.memPointerArray[i] << endl;
-            }
+            free(buf);
         }
     }
-    return TRUE;
+    return ptrs;
+}
+
+BOOL Client::FindValueRoutine() {
+    
 }
 
 map<uintptr_t, BYTE> Client::GetMemoryMap(uintptr_t startAddress = baseAddress, uintptr_t endAddress = endOfGameAddress) {
@@ -119,6 +103,12 @@ BOOL Client::MemoryMapRoutine(uintptr_t startAddress = baseAddress, uintptr_t en
     return TRUE;
 }
 
+HANDLE GetProcessHandleByName(wstring name, DWORD access = PROCESS_ALL_ACCESS, BOOL inheritHandle = FALSE) {
+    DWORD processID = GetPIDsOfProcess(name)[0];
+    HANDLE hProc = OpenProcess(access, inheritHandle, processID);
+    return hProc;
+}
+
 int main() {
 
     Client c;
@@ -134,5 +124,18 @@ int main() {
     }
 
     // c.MemoryMapRoutine();
-    c.FindIntegerRoutine();
+    // c.FindValueRoutine();
+
+    HANDLE gameHandle = GetProcessHandleByName(c.GetWVermintideExe());
+    if (!gameHandle) {
+        cout << "invalid handle" << endl;
+        return 1;
+    }
+
+    MEMORY_BASIC_INFORMATION buf;
+    SIZE_T result = VirtualQueryEx(gameHandle, (void*)0x140000000, &buf, sizeof(buf));
+    if (!result) {
+        cout << "VirtualQuery failed " << GetLastError() <<endl;
+    }
+    cout << result << endl;
 }

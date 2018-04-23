@@ -10,8 +10,8 @@
 class Client {
 public:
     void Init();
-    BOOL FindValue(void* value, SIZE_T size, MEMPTRS* matchinValues, uintptr_t startAddress, uintptr_t endAddress);
-    BOOL FindIntegerRoutine();
+    vector<uintptr_t> FindValue(void* value, SIZE_T size, HANDLE hProcess, uintptr_t startAddress, uintptr_t endAddress);
+    BOOL FindValueRoutine();
     map<uintptr_t, BYTE> GetMemoryMap(uintptr_t startAddress, uintptr_t endAddress);
     BOOL MemoryMapRoutine(uintptr_t startAddress, uintptr_t endAddress);
     StealthyMemClient& GetMemManipClient() {
@@ -34,6 +34,8 @@ protected:
     static const uintptr_t endOfGameAddress = 0x147A12000;
     StealthyMemClient smc;
 };
+
+HANDLE GetProcessHandleByName(wstring name, DWORD, BOOL);
 
 /*
 Strings of interest:
