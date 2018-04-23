@@ -22,7 +22,7 @@ vector<uintptr_t> Client::FindValue(void* value, const SIZE_T size, HANDLE hProc
         return ptrs;
     }
     MEMORY_BASIC_INFORMATION info;
-    for (PBYTE p = NULL; VirtualQueryEx(hProcess, p, &info, sizeof(info)) != 0; p += info.RegionSize) {
+    for (PBYTE p = NULL/*(PBYTE)baseAddress*/; VirtualQueryEx(hProcess, p, &info, sizeof(info)) != 0; p += info.RegionSize) {
         if (info.State == MEM_COMMIT) {
             BYTE* buf = (BYTE*)malloc(info.RegionSize);
             SIZE_T sizeBuf;
@@ -138,7 +138,7 @@ BOOL Client::MemoryMapRoutine(uintptr_t startAddress = baseAddress, uintptr_t en
     return TRUE;
 }
 
-HANDLE GetProcessHandleByName(wstring name, DWORD access = PROCESS_ALL_ACCESS, BOOL inheritHandle = FALSE) {
+HANDLE GetProcessHandleByName(wstring name, DWORD access, BOOL inheritHandle) {
     DWORD processID = GetPIDsOfProcess(name)[0];
     HANDLE hProc = OpenProcess(access, inheritHandle, processID);
     return hProc;
@@ -154,27 +154,27 @@ vector<BYTE> HexStringToBytes(string hexString) {
     return bytes;
 }
 
-int main() {
+// int main() {
 
-    Client c;
-    c.Init();
+//     Client c;
+//     c.Init();
     
-    if (!c.GetMemManipClient().Init(c.GetLsassExe())) {
-        cout << "Init failed" << endl;
-        return 1;
-    }
-    if (!c.GetMemManipClient().SetTargetProcessHandle(c.GetWVermintideExe())) {
-        cout << "Setting Handle failed" << endl;
-        return 1;
-    }
+//     if (!c.GetMemManipClient().Init(c.GetLsassExe())) {
+//         cout << "Init failed" << endl;
+//         return 1;
+//     }
+//     if (!c.GetMemManipClient().SetTargetProcessHandle(c.GetWVermintideExe())) {
+//         cout << "Setting Handle failed" << endl;
+//         return 1;
+//     }
 
-    HANDLE gameHandle = GetProcessHandleByName(c.GetWVermintideExe());
-    if (!gameHandle) {
-        cout << "invalid handle" << endl;
-        return 1;
-    }
+//     HANDLE gameHandle = GetProcessHandleByName(c.GetWVermintideExe());
+//     if (!gameHandle) {
+//         cout << "invalid handle" << endl;
+//         return 1;
+//     }
 
-    c.FindValueRoutine(gameHandle);
+//     c.FindValueRoutine(gameHandle);
 
     // c.MemoryMapRoutine();
-}
+// }

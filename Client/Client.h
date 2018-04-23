@@ -36,7 +36,7 @@ protected:
     StealthyMemClient smc;
 };
 
-HANDLE GetProcessHandleByName(wstring name, DWORD, BOOL);
+HANDLE GetProcessHandleByName(wstring name, DWORD access = PROCESS_ALL_ACCESS, BOOL inherit = FALSE);
 vector<BYTE> HexStringToBytes(string hexString);
 
 /*
