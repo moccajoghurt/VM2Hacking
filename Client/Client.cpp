@@ -15,8 +15,8 @@ void Client::Init() {
     targetProcessExe = e+'v'+'e'+'r'+'m'+'i'+'n'+'t'+'i'+'d'+'e'+'2'+'.'+'e'+'x'+'e';
 }
 
-vector<uintptr_t> Client::FindValue(void* value, const SIZE_T size, HANDLE hProcess) {
-    vector<uintptr_t> ptrs;
+vector<void*> Client::FindValue(void* value, const SIZE_T size, HANDLE hProcess) {
+    vector<void*> ptrs;
     if (size > MAX_VAL_SIZE) {
         cout << "Val too big" << endl;
         return ptrs;
@@ -25,7 +25,7 @@ vector<uintptr_t> Client::FindValue(void* value, const SIZE_T size, HANDLE hProc
     for (PBYTE p = NULL; VirtualQueryEx(hProcess, p, &info, sizeof(info)) != 0; p += info.RegionSize) {
         if (info.State == MEM_COMMIT) {
             UINT readSize = info.RegionSize > smc.GetUsableSharedMemSize() ? smc.GetUsableSharedMemSize() : info.RegionSize;
-            readSize -= 1;
+            readSize -= 5;
             BYTE* buf = (BYTE*)malloc(readSize);
             int lastIndex = 0;
             for (int i = 0; i < info.RegionSize; i += readSize) {
@@ -39,7 +39,7 @@ vector<uintptr_t> Client::FindValue(void* value, const SIZE_T size, HANDLE hProc
                 smc.ReadVirtualMemory(p + i, buf, readSize, &sizeBuf);
                 for (int n = 0; n < readSize; n++) {
                     if (memcmp(buf + n, value, size) == 0) {
-                        ptrs.push_back((uintptr_t)(p + i + n));
+                        ptrs.push_back((void*)(p + i + n));
                     }
                 }
                 lastIndex = i;
@@ -49,7 +49,7 @@ vector<uintptr_t> Client::FindValue(void* value, const SIZE_T size, HANDLE hProc
                 smc.ReadVirtualMemory(p + lastIndex, buf, info.RegionSize - lastIndex, &sizeBuf);
                 for (int n = 0; n < info.RegionSize - lastIndex; n++) {
                     if (memcmp(buf + n, value, size) == 0) {
-                        ptrs.push_back((uintptr_t)(p + lastIndex + n));
+                        ptrs.push_back((void*)(p + lastIndex + n));
                     }
                 }
             }
@@ -59,34 +59,39 @@ vector<uintptr_t> Client::FindValue(void* value, const SIZE_T size, HANDLE hProc
     return ptrs;
 }
 
-BOOL Client::FindValueRoutine(HANDLE hProcess) {
+BOOL Client::FindValueRoutine(HANDLE hProcess, int minByteSize) {
+    // Problem: using hex values works for strings but not for values where little-endian is relevant
     cout << "Enter hex value to search:" << endl;
     string hexString;
     cin >> hexString;
     
     vector<BYTE> bytes = HexStringToBytes(hexString);
-    
-    vector<uintptr_t> matches = FindValue(&bytes[0], bytes.size(), hProcess);
+    int varByteSize = bytes.size() < minByteSize ? minByteSize : bytes.size();
+    cout << *((short*)&bytes[0]) << endl;
+    vector<void*> matches = FindValue(&bytes[0], varByteSize, hProcess);
 
     while (TRUE) {
 
-        vector<uintptr_t> newVals;
+        vector<void*> newVals;
         string hexChoice;
         cout << "size: " << matches.size() << endl;
         cout << "show?" << endl << "FF: yes" << endl << "other value: search for this value" << endl;
         cin >> hexChoice;
 
-        if (hexChoice == "FF") {
-            for (uintptr_t p : matches) {
+        if (hexChoice == "FF" || hexChoice == "ff") {
+            for (void* p : matches) {
                 cout << hex << p << endl;
             }
         } else {
             bytes = HexStringToBytes(hexChoice);
-            for (uintptr_t p : matches) {
+            for (void* p : matches) {
                 SIZE_T sizeBuf;
                 BYTE buf[MAX_VAL_SIZE];
-                smc.ReadVirtualMemory((void*)p, &buf, bytes.size(), &sizeBuf);
-                if (memcmp(buf, &bytes[0], bytes.size()) == 0) {
+                smc.ReadVirtualMemory((void*)p, buf, varByteSize, &sizeBuf);
+                // BYTE valBuf[MAX_VAL_SIZE] = {0};
+                // memcpy(valBuf, &bytes[0], bytes.size());
+                cout << *((short*)&bytes[0]) << endl;
+                if (memcmp(buf, /*valBuf*/&bytes[0], varByteSize) == 0) {
                     newVals.push_back(p);
                 }
             }
@@ -180,12 +185,12 @@ int main() {
         cout << "Init failed" << endl;
         return 1;
     }
-    if (!c.GetMemManipClient().SetTargetProcessHandle(c.GetwTargetProcessExe())) {
+    if (!c.GetMemManipClient().SetTargetProcessHandle(/*c.GetwTargetProcessExe()*/L"Warcraft III.exe")) {
         cout << "Setting Handle failed" << endl;
         return 1;
     }
 
-    HANDLE gameHandle = GetProcessHandleByName(c.GetwTargetProcessExe());
+    HANDLE gameHandle = GetProcessHandleByName(/*c.GetwTargetProcessExe()*/L"Warcraft III.exe");
     if (!gameHandle) {
         cout << "invalid handle" << endl;
         return 1;
@@ -193,5 +198,5 @@ int main() {
 
     c.FindValueRoutine(gameHandle);
 
-    c.MemoryMapRoutine();
+    // c.MemoryMapRoutine();
 }

@@ -11,8 +11,8 @@
 class Client {
 public:
     void Init();
-    vector<uintptr_t> FindValue(void* value, SIZE_T size, HANDLE hProcess);
-    BOOL FindValueRoutine(HANDLE hProcess);
+    vector<void*> FindValue(void* value, SIZE_T size, HANDLE hProcess);
+    BOOL FindValueRoutine(HANDLE hProcess, int minByteSize = 0);
     map<uintptr_t, BYTE> GetMemoryMap(uintptr_t startAddress, uintptr_t endAddress);
     BOOL MemoryMapRoutine(uintptr_t startAddress, uintptr_t endAddress);
     StealthyMemClient& GetMemManipClient() {
