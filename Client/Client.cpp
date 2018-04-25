@@ -9,10 +9,10 @@ using namespace std;
 void Client::Init() {
     wstring we = L"";
     string e = "";
-    lsassExe = we+L'l'+L's'+L'a'+L's'+L's'+L'.'+L'e'+L'x'+L'e';
-    wVermintideExe = we+L'v'+L'e'+L'r'+L'm'+L'i'+L'n'+L't'+L'i'+L'd'+L'e'+L'2'+L'.'+L'e'+L'x'+L'e';
-    // wVermintideExe = L"RustClient.exe";
-    vermintideExe = e+'v'+'e'+'r'+'m'+'i'+'n'+'t'+'i'+'d'+'e'+'2'+'.'+'e'+'x'+'e';
+    pivotExe = we+L'l'+L's'+L'a'+L's'+L's'+L'.'+L'e'+L'x'+L'e';
+    wTargetProcessExe = we+L'v'+L'e'+L'r'+L'm'+L'i'+L'n'+L't'+L'i'+L'd'+L'e'+L'2'+L'.'+L'e'+L'x'+L'e';
+    // wTargetProcessExe = L"RustClient.exe";
+    targetProcessExe = e+'v'+'e'+'r'+'m'+'i'+'n'+'t'+'i'+'d'+'e'+'2'+'.'+'e'+'x'+'e';
 }
 
 vector<uintptr_t> Client::FindValue(void* value, const SIZE_T size, HANDLE hProcess) {
@@ -22,18 +22,35 @@ vector<uintptr_t> Client::FindValue(void* value, const SIZE_T size, HANDLE hProc
         return ptrs;
     }
     MEMORY_BASIC_INFORMATION info;
-    for (PBYTE p = NULL/*(PBYTE)baseAddress*/; VirtualQueryEx(hProcess, p, &info, sizeof(info)) != 0; p += info.RegionSize) {
+    for (PBYTE p = NULL; VirtualQueryEx(hProcess, p, &info, sizeof(info)) != 0; p += info.RegionSize) {
         if (info.State == MEM_COMMIT) {
-            BYTE* buf = (BYTE*)malloc(info.RegionSize);
-            SIZE_T sizeBuf;
-            smc.ReadVirtualMemory(p, &buf, info.RegionSize, &sizeBuf);
-            for (int i = 0; i < info.RegionSize; i++) {
+            UINT readSize = info.RegionSize > smc.GetUsableSharedMemSize() ? smc.GetUsableSharedMemSize() : info.RegionSize;
+            readSize -= 1;
+            BYTE* buf = (BYTE*)malloc(readSize);
+            int lastIndex = 0;
+            for (int i = 0; i < info.RegionSize; i += readSize) {
+                // TODO: take care of values that lie between the readsize memory chunks
+                // possible solution: read pointer - size of value each iteration
                 if (i + size > info.RegionSize) {
                     // end of memory region reached
                     break;
                 }
-                if (memcmp(buf + i, value, size) == 0) {
-                    ptrs.push_back((uintptr_t)(p + i));
+                SIZE_T sizeBuf;
+                smc.ReadVirtualMemory(p + i, buf, readSize, &sizeBuf);
+                for (int n = 0; n < readSize; n++) {
+                    if (memcmp(buf + n, value, size) == 0) {
+                        ptrs.push_back((uintptr_t)(p + i + n));
+                    }
+                }
+                lastIndex = i;
+            }
+            if (lastIndex < info.RegionSize) {
+                SIZE_T sizeBuf;
+                smc.ReadVirtualMemory(p + lastIndex, buf, info.RegionSize - lastIndex, &sizeBuf);
+                for (int n = 0; n < info.RegionSize - lastIndex; n++) {
+                    if (memcmp(buf + n, value, size) == 0) {
+                        ptrs.push_back((uintptr_t)(p + lastIndex + n));
+                    }
                 }
             }
             free(buf);
@@ -81,7 +98,7 @@ BOOL Client::FindValueRoutine(HANDLE hProcess) {
     return TRUE;
 }
 
-map<uintptr_t, BYTE> Client::GetMemoryMap(uintptr_t startAddress = baseAddress, uintptr_t endAddress = endOfGameAddress) {
+map<uintptr_t, BYTE> Client::GetMemoryMap(uintptr_t startAddress = 0, uintptr_t endAddress = 0) {
     map<uintptr_t, BYTE> memoryMap;
     for (uintptr_t i = startAddress; i < endAddress; i++) {
         SIZE_T sizeBuf;
@@ -92,7 +109,7 @@ map<uintptr_t, BYTE> Client::GetMemoryMap(uintptr_t startAddress = baseAddress, 
     return memoryMap;
 }
 
-BOOL Client::MemoryMapRoutine(uintptr_t startAddress = baseAddress, uintptr_t endAddress = endOfGameAddress) {
+BOOL Client::MemoryMapRoutine(uintptr_t startAddress = 0, uintptr_t endAddress = 0) {
     cout << "Creating Map..." << endl;
     map<uintptr_t, BYTE> memoryMap = GetMemoryMap(startAddress, endAddress);
 
@@ -154,27 +171,27 @@ vector<BYTE> HexStringToBytes(string hexString) {
     return bytes;
 }
 
-// int main() {
+int main() {
 
-//     Client c;
-//     c.Init();
+    Client c;
+    c.Init();
     
-//     if (!c.GetMemManipClient().Init(c.GetLsassExe())) {
-//         cout << "Init failed" << endl;
-//         return 1;
-//     }
-//     if (!c.GetMemManipClient().SetTargetProcessHandle(c.GetWVermintideExe())) {
-//         cout << "Setting Handle failed" << endl;
-//         return 1;
-//     }
+    if (!c.GetMemManipClient().Init(c.GetPivotExe())) {
+        cout << "Init failed" << endl;
+        return 1;
+    }
+    if (!c.GetMemManipClient().SetTargetProcessHandle(c.GetwTargetProcessExe())) {
+        cout << "Setting Handle failed" << endl;
+        return 1;
+    }
 
-//     HANDLE gameHandle = GetProcessHandleByName(c.GetWVermintideExe());
-//     if (!gameHandle) {
-//         cout << "invalid handle" << endl;
-//         return 1;
-//     }
+    HANDLE gameHandle = GetProcessHandleByName(c.GetwTargetProcessExe());
+    if (!gameHandle) {
+        cout << "invalid handle" << endl;
+        return 1;
+    }
 
-//     c.FindValueRoutine(gameHandle);
+    c.FindValueRoutine(gameHandle);
 
-    // c.MemoryMapRoutine();
-// }
+    c.MemoryMapRoutine();
+}

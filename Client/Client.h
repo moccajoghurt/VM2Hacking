@@ -18,21 +18,23 @@ public:
     StealthyMemClient& GetMemManipClient() {
         return smc;
     }
-    wstring GetLsassExe() {
-        return lsassExe;
+    wstring GetPivotExe() {
+        return pivotExe;
     }
-    wstring GetWVermintideExe() {
-        return wVermintideExe;
+    wstring GetwTargetProcessExe() {
+        return wTargetProcessExe;
     }
-    string GetVermintideExe() {
-        return vermintideExe;
+    string GetTargetProcessExe() {
+        return targetProcessExe;
+    }
+    void SetBaseAddress(uintptr_t baseAddress) {
+        this->baseAddress = baseAddress;
     }
 protected:
-    wstring lsassExe;
-    wstring wVermintideExe;
-    string vermintideExe;
-    static const uintptr_t baseAddress = 0x140000000;
-    static const uintptr_t endOfGameAddress = 0x147A12000;
+    wstring pivotExe;
+    wstring wTargetProcessExe;
+    string targetProcessExe;
+    uintptr_t baseAddress = 0x140000000;
     StealthyMemClient smc;
 };
 

@@ -2,6 +2,7 @@
 #include "../MemWars/MemWarsCore/MemWarsCore.h"
 #include "../MemWars/MemWarsServices/MemWarsServices.h"
 #include <iostream>
+// #include <cstdlib>
 
 using namespace std;
 
@@ -18,7 +19,7 @@ void FindValueTest() {
     Client c;
     c.Init();
     
-    if (!c.GetMemManipClient().Init(c.GetLsassExe())) {
+    if (!c.GetMemManipClient().Init(c.GetPivotExe())) {
         cout << "FindValueTest failed: Init failed" << endl;
         return;
     }
@@ -33,6 +34,8 @@ void FindValueTest() {
         return;
     }
 
+    
+
     BYTEARRAY bArr;
     IntToByteArray(&bArr, 1337);
     MEMPTRS testPtrs = {0};
@@ -40,14 +43,14 @@ void FindValueTest() {
 
     vector<uintptr_t> testPtrs1 = c.FindValue(bArr.values, bArr.size, process);
 
-    if (testPtrs1.size() == testPtrs.size) {
-        cout << "FindValueTest success" << endl;
+    // since the value count can change during the scan, a small size difference is fine
+    if (abs((long)testPtrs1.size() - (long)testPtrs.size) < 5) {
+        cout << "FindValueTest() success" << endl;
     } else {
         
-        cout << "FindValueTest failed" << endl;
+        cout << "FindValueTest() failed" << endl;
     }
-    cout << testPtrs1.size() << endl << testPtrs.size << endl;
-    // c.FindValueRoutine(gameHandle);
+    // cout << hex << testPtrs1[0] << " " << testPtrs.memPointerArray[0] << endl;
 }
 
 int main () {

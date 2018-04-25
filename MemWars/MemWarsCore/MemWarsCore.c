@@ -113,7 +113,6 @@ BOOL FindValueInProcess(BYTEARRAY* bArrValue, HANDLE hProcess, MEMPTRS* matching
             for (int i = 0; i < bytesRead; i++) {
                 if (i + bArrValue->size > bytesRead) {
                     // end of memory reached
-                    // printf("edge reached\n");
                     break;
                 }
                 BYTEARRAY memVal;
